@@ -52,6 +52,7 @@ void setup() {
 
   analogWrite(6, CONTRAST);
 
+ 
   //SETTING TIME!
   // HH:MM 1-24:1-60
   //SET HH, on click-> set min -> on click continue
