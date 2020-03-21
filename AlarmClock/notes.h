@@ -89,38 +89,87 @@
 #define NOTE_DS8 4978
 #define REST      0
 
-int tempo = 160;
 
-int melody[] = {
 
-  // Keyboard cat
-  // Score available at https://musescore.com/user/142788/scores/147371
+const int MELODIES = 2;
+int currentMelody = 1;
+const char melodyNames  [MELODIES][15] = {
 
-  REST, 1,
-  REST, 1,
-  NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_E4, 4,
-  NOTE_C4, 4, NOTE_E4, 8, NOTE_G4, -4, NOTE_E4, 4,
-  NOTE_A3, 4, NOTE_C4, 4, NOTE_E4, 4, NOTE_C4, 4,
-  NOTE_A3, 4, NOTE_C4, 8, NOTE_E4, -4, NOTE_C4, 4,
-  NOTE_G3, 4, NOTE_B3, 4, NOTE_D4, 4, NOTE_B3, 4,
-  NOTE_G3, 4, NOTE_B3, 8, NOTE_D4, -4, NOTE_B3, 4,
-
-  NOTE_G3, 4, NOTE_G3, 8, NOTE_G3, -4, NOTE_G3, 8, NOTE_G3, 4,
-  NOTE_G3, 4, NOTE_G3, 4, NOTE_G3, 8, NOTE_G3, 4,
-  NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_E4, 4,
-  NOTE_C4, 4, NOTE_E4, 8, NOTE_G4, -4, NOTE_E4, 4,
-  NOTE_A3, 4, NOTE_C4, 4, NOTE_E4, 4, NOTE_C4, 4,
-  NOTE_A3, 4, NOTE_C4, 8, NOTE_E4, -4, NOTE_C4, 4,
-  NOTE_G3, 4, NOTE_B3, 4, NOTE_D4, 4, NOTE_B3, 4,
-  NOTE_G3, 4, NOTE_B3, 8, NOTE_D4, -4, NOTE_B3, 4,
-
-  NOTE_G3, -1,
-
+  { "Keyboard Cat"
+  }, {"Take on me"}
 };
-int notes = sizeof(melody) / sizeof(melody[0]) / 2;
-// this calculates the duration of a whole note in ms
-int wholenote = (60000 * 4) / tempo;
 
-int divider = 0, noteDuration = 0;
+void playAlarm() {
+  deleteAlarm(-1);
+  int tempo[] = {160, 140};
 
 
+  int melody[][177] = { {
+      REST, 1,
+      REST, 1,
+      NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_E4, 4,
+      NOTE_C4, 4, NOTE_E4, 8, NOTE_G4, -4, NOTE_E4, 4,
+      NOTE_A3, 4, NOTE_C4, 4, NOTE_E4, 4, NOTE_C4, 4,
+      NOTE_A3, 4, NOTE_C4, 8, NOTE_E4, -4, NOTE_C4, 4,
+      NOTE_G3, 4, NOTE_B3, 4, NOTE_D4, 4, NOTE_B3, 4,
+      NOTE_G3, 4, NOTE_B3, 8, NOTE_D4, -4, NOTE_B3, 4,
+      NOTE_G3, 4, NOTE_G3, 8, NOTE_G3, -4, NOTE_G3, 8, NOTE_G3, 4,
+      NOTE_G3, 4, NOTE_G3, 4, NOTE_G3, 8, NOTE_G3, 4,
+      NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_E4, 4,
+      NOTE_C4, 4, NOTE_E4, 8, NOTE_G4, -4, NOTE_E4, 4,
+      NOTE_A3, 4, NOTE_C4, 4, NOTE_E4, 4, NOTE_C4, 4,
+      NOTE_A3, 4, NOTE_C4, 8, NOTE_E4, -4, NOTE_C4, 4,
+      NOTE_G3, 4, NOTE_B3, 4, NOTE_D4, 4, NOTE_B3, 4,
+      NOTE_G3, 4, NOTE_B3, 8, NOTE_D4, -4, NOTE_B3, 4,
+      NOTE_G3, -1,
+    }, {
+      NOTE_FS5, 8, NOTE_FS5, 8, NOTE_D5, 8, NOTE_B4, 8, REST, 8, NOTE_B4, 8, REST, 8, NOTE_E5, 8,
+      REST, 8, NOTE_E5, 8, REST, 8, NOTE_E5, 8, NOTE_GS5, 8, NOTE_GS5, 8, NOTE_A5, 8, NOTE_B5, 8,
+      NOTE_A5, 8, NOTE_A5, 8, NOTE_A5, 8, NOTE_E5, 8, REST, 8, NOTE_D5, 8, REST, 8, NOTE_FS5, 8,
+      REST, 8, NOTE_FS5, 8, REST, 8, NOTE_FS5, 8, NOTE_E5, 8, NOTE_E5, 8, NOTE_FS5, 8, NOTE_E5, 8,
+      NOTE_FS5, 8, NOTE_FS5, 8, NOTE_D5, 8, NOTE_B4, 8, REST, 8, NOTE_B4, 8, REST, 8, NOTE_E5, 8,
+      REST, 8, NOTE_E5, 8, REST, 8, NOTE_E5, 8, NOTE_GS5, 8, NOTE_GS5, 8, NOTE_A5, 8, NOTE_B5, 8,
+      NOTE_A5, 8, NOTE_A5, 8, NOTE_A5, 8, NOTE_E5, 8, REST, 8, NOTE_D5, 8, REST, 8, NOTE_FS5, 8,
+      REST, 8, NOTE_FS5, 8, REST, 8, NOTE_FS5, 8, NOTE_E5, 8, NOTE_E5, 8, NOTE_FS5, 8, NOTE_E5, 8,
+      NOTE_FS5, 8, NOTE_FS5, 8, NOTE_D5, 8, NOTE_B4, 8, REST, 8, NOTE_B4, 8, REST, 8, NOTE_E5, 8,
+      REST, 8, NOTE_E5, 8, REST, 8, NOTE_E5, 8, NOTE_GS5, 8, NOTE_GS5, 8, NOTE_A5, 8, NOTE_B5, 8,
+      NOTE_A5, 8, NOTE_A5, 8, NOTE_A5, 8, NOTE_E5, 8, REST, 8, NOTE_D5, 8, REST, 8, NOTE_FS5, 8,
+      REST,
+    }
+  };
+
+  int notes = sizeof(melody[currentMelody]) / sizeof(melody[currentMelody][0]) / 2;
+  // this calculates the duration of a whole note in ms
+  int wholenote = (60000 * 4) / tempo[currentMelody];
+
+  int divider = 0, noteDuration = 0;
+
+  uint8_t inc;
+  while (digitalRead(INCBUTTON) == HIGH);
+  Serial.println("PLAYING!!");
+  Serial.println(melodyNames[currentMelody]);
+
+  for (int i = 0; i < 3; i++) {
+    for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
+      inc = digitalRead(INCBUTTON);
+      if (inc == HIGH) {
+        break;
+      }
+      divider = melody[currentMelody][thisNote + 1];
+      if (divider > 0) {
+        noteDuration = (wholenote) / divider;
+      } else if (divider < 0) {
+        noteDuration = (wholenote) / abs(divider);
+        noteDuration *= 1.5; // increases the duration in half for dotted notes
+      }
+      tone(BUZZPIN, melody[currentMelody][thisNote], noteDuration * 0.9);
+      Alarm.delay(noteDuration);
+      noTone(BUZZPIN);
+    }
+    if (inc == HIGH) {
+      break;
+    }
+  }
+
+
+}
