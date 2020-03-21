@@ -100,7 +100,7 @@ const char melodyNames  [MELODIES][15] = {
 };
 
 void playAlarm() {
-
+  deleteAlarm(-1);
   int tempo[] = {160, 140};
 
 

@@ -10,6 +10,35 @@
 #define DHTTYPE DHT22
 #define BUZZPIN 13
 #define LCDCONTRAST 155
+AlarmID_t alarmId[10]; //maximum 10 alarms
+int alarms = 0;//current number of alarms
+int showingAlarm = 0;
+int reset = 0;
+void deleteAlarm(AlarmID_t i) {
+  AlarmID_t id;
+  if (id == -1) {//if -1, deleting alarm that is triggered once
+    id = Alarm.getTriggeredAlarmId();
+    if (Alarm.isRepeating(id)) {
+      return;
+    }
+  } else {
+    id = i;
+    Alarm.free(id);
+  }
+  AlarmID_t temp[10];
+  int pom = 0;
+  for (int i = 0; i < alarms; i++) {
+    if (id != alarmId[i]) {
+      temp[i - pom] = alarmId[i];
+    } else {
+      pom = 1;
+    }
+  }
+  alarms--;
+  for (int i = 0; i < alarms; i++) {
+    alarmId[i] = temp[i];
+  }
+}
 #include "notes.h"
 DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
@@ -17,7 +46,7 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 uint8_t setButton = 0;//state of three buttons
 uint8_t incButton = 0;
 uint8_t okButton = 0;
-
+int first = 0;
 int setHH, setMM, setSS = 0;//values used to set alarms and timers
 int settingAlarmClock = 0;////setting alarm time: 1 hours, 2 minutes
 int settingAlarmType = 0;// 1 once, 2 daily, 3 weekly //setting type of alarm
@@ -25,9 +54,7 @@ int settingAlarmType = 0;// 1 once, 2 daily, 3 weekly //setting type of alarm
 bool inMenu = false;
 int selMenu = 0; //NOt in menu, 1 SET ALARM, 2 SHOW ALARMS, 3 CHOOSE A SONG
 
-AlarmID_t alarmId[10]; //maximum 10 alarms
-int alarms = 0;//current number of alarms
-int showingAlarm = 0;
+
 
 void setup()  {
   Serial.begin(9600);
@@ -39,12 +66,8 @@ void setup()  {
   pinMode(OKBUTTON, INPUT);
   lcd.begin(16, 2);
   dht.begin();
-  setTime(1584404453);
-  //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
-
-  alarmId[alarms++] = Alarm.alarmOnce(14, 58, 0, playAlarm); //DAILY dtDailyAlarm = 3
-  alarmId[alarms++] = Alarm.alarmRepeat(23, 58, 0, playAlarm); //DAILY dtDailyAlarm = 3
-
+  setTime(1584835118);
+  //  //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
 }
 
 void chooseMenu(int inc) {
@@ -62,7 +85,11 @@ void chooseMenu(int inc) {
       lcd.print("SET ALARM");
       break;
     case 2:
-      lcd.print("SHOW ALARMS");
+      if (!alarms) {
+        lcd.print("NO ALARMS");
+      } else {
+        lcd.print("SHOW ALARMS");
+      }
       break;
     case 3:
       lcd.print("Change melody");
@@ -72,34 +99,59 @@ void chooseMenu(int inc) {
       break;
   }
 }
+void resetStuff() {
+  settingAlarmType = 0;
+  settingAlarmClock = 0;
+  showingAlarm = 0;
+  selMenu = 0;
+  inMenu = false;
+  first = 0;
+  reset = 0;
+}
 void loop() {
   setButton = digitalRead(SETBUTTON);
   incButton = digitalRead(INCBUTTON);
   okButton = digitalRead(OKBUTTON);
   if (setButton == HIGH && selMenu == 0) {
     Serial.println("GO TO MENU");
+    reset = 0;
     chooseMenu(1);
   } else if (okButton == HIGH && selMenu != 0 && !inMenu) { //change menu
     Serial.println("CHANGE MENU");
+    reset = 0;
     chooseMenu(1);//inMenu?
   } else if (setButton == HIGH && selMenu != 0 && !inMenu) { //select menu
     Serial.println("SELCT MENU");
+    reset = 0;
+    if (!alarms && selMenu == 2) {
+      return;
+    }
     selectMenu(selMenu, 3);
     inMenu = true;
-    //go inside menu
   } else if (okButton == HIGH && inMenu) {
     Serial.println("IN MENU OK");
+    reset = 0;
     selectMenu(selMenu, 1);
   } else if (incButton == HIGH && inMenu) {
     Serial.println("IN MENU inc");
+    reset = 0;
     selectMenu(selMenu, 2);
   } else if (setButton == HIGH && inMenu) {
     Serial.println("IN MENU SET");
+    reset = 0;
     selectMenu(selMenu, 3);
   } else if (selMenu == 0 && !inMenu) {
     digitalClockDisplay();
   }
-  Alarm.delay(600);
+  Alarm.delay(500);
+  if (selMenu != 0) {
+    reset++;
+  } else {
+    reset = 0;
+  }
+  if (reset == 20) {
+    resetStuff();
+  }
 }
 void displayDateTime(int h, int m, int s = -1, int d = -1, int mon = -1, int y = -1) {
   lcd.setCursor(0, 0);
@@ -147,6 +199,7 @@ void displayDateTime(int h, int m, int s = -1, int d = -1, int mon = -1, int y =
 }
 
 void digitalClockDisplay() {
+  lcd.clear();
   displayDateTime(hour(), minute(), second(), day(), month(), year());
 }
 void DHTMeasure() {
@@ -187,8 +240,8 @@ void selectMenu(int menu, int button) {
         Serial.println("SET ALARM MENU: INC");
         showSetAlarmMenu(1);
       } else if (button == 3) {//SETBUTTOn
-        Serial.println("SET ALARM MENU: SET");// TODO CHECK IF SET ALARM TYPE bla bla
-        Serial.println(settingAlarmType);
+        Serial.println("SET ALARM MENU: SET");
+        Serial.println(settingAlarmClock);
         if (settingAlarmClock == 0) {
           settingAlarmClock = 1;
           showSetAlarmMenu(0);
@@ -200,7 +253,7 @@ void selectMenu(int menu, int button) {
         }
       }
       break;
-    case 2: // SHOW ALARMS//TODO Shit
+    case 2: //TODO
       static time_t alarmVal = Alarm.read(alarmId[showingAlarm]);
       if (button == 1) {// OK
         if (settingAlarmClock == 0) {
@@ -211,6 +264,7 @@ void selectMenu(int menu, int button) {
           alarmVal = Alarm.read(alarmId[showingAlarm]);
           lcd.clear();
           showAlarm(alarmId[showingAlarm]);
+
         } else if (settingAlarmType == 0) {
           settingAlarmClock++;
           if (settingAlarmClock == 3) {
@@ -219,7 +273,7 @@ void selectMenu(int menu, int button) {
           showSetAlarmMenu(0);
         } else {
           settingAlarmType++;
-          if (settingAlarmType == 5) {
+          if (settingAlarmType == 6) {
             settingAlarmType = 1;
           }
           showSetAlarmMenu(0);
@@ -231,7 +285,9 @@ void selectMenu(int menu, int button) {
         }
       } else if (button == 3) {// SET
         lcd.clear();
-        static int first = 0;
+        //        static int first = 0;
+        Serial.println("FIRST IS");
+        Serial.println(first);
 
         if (!first) {
           first = 1;
@@ -248,19 +304,6 @@ void selectMenu(int menu, int button) {
           setAlarm(true);
           first = 0;
         }
-
-        //        else if (settingAlarmClock == 1 && settingAlarmType == 0 ) {
-        //          setHH = alarmVal / 3600;
-        //          setMM = alarmVal % 3600 / 60;
-        //          showSetAlarmMenu(0);
-        //          settingAlarmType = 1;
-        //        }  else if (settingAlarmType == 1) {
-        //          settingAlarmType = 1;
-        //          showSetAlarmMenu(0);
-        //        } else {
-        //          setAlarm(true);
-        //        }
-
       }
       break;
     case 3: // CHOOSE SONG
@@ -273,7 +316,6 @@ void selectMenu(int menu, int button) {
         }
         displaySong(choosingSong);
       } else if (button == 2) {
-        //todoPlaySong
         int prevSong = currentMelody;
         currentMelody = choosingSong;
         playAlarm();
@@ -301,13 +343,16 @@ void selectMenu(int menu, int button) {
 
 void showAlarm(int id) {
   time_t al = Alarm.read(id);
+  Serial.println("AL");
+  Serial.println(al);
+  //  int hh = al / 3600;
+  //  int mm = al % 3600 / 60;
+  //  showSetAlarmMenu(0);
   int hh = hour(al);
   int mm = minute(al);
   int dow = weekday(al); //(1 sunday);
   bool rep = Alarm.isRepeating(id);
   bool en = Alarm.isEnabled(id);
-  Serial.println("ENN");
-  Serial.println(en);
   dtAlarmPeriod_t alarmType = Alarm.readType(id);
   lcd.setCursor(0, 0);
   displayDateTime(hh, mm);
@@ -371,10 +416,16 @@ void showSetAlarmMenu(int inc) {
     switch (settingAlarmClock) {
       case 1:
         setHH += inc;
+        if (setHH == 24) {
+          setHH = 0;
+        }
         lcd.print("Set hours");
         break;
       case 2:
         setMM += inc;
+        if (setMM == 60) {
+          setMM = 0;
+        }
         lcd.print("Set minutes");
         break;
       default:
@@ -401,18 +452,40 @@ void showSetAlarmMenu(int inc) {
           lcd.print("Enable");
         }
         break;
-      default: break;
+      case 5:
+        lcd.print("Delete");
+        break;
+      default:
+        break;
     }
   }
 }
+
 
 void setAlarm(bool changeAlarm) {
   if (alarms == 9) {
     lcd.print("limit reached!");
     return;
   }
-  if (changeAlarm && settingAlarmType != 4) {
+  if (changeAlarm && settingAlarmType != 4 && settingAlarmType != 5) {
+    switch (settingAlarmType) {
+      case 1:
+        Alarm.setOneShot(alarmId[showingAlarm], true);
+        break;
+      case 2:
+      case 3:
+        Alarm.setOneShot(alarmId[showingAlarm], false);
+        if (settingAlarmType == 2) {
+          Alarm.setPeriod(alarmId[showingAlarm], dtDailyAlarm);
+        } else {
+          Alarm.setPeriod(alarmId[showingAlarm], dtWeeklyAlarm);
+        }
+    }
     Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
+    lcd.clear();
+    lcd.print("Alarm set!");
+    Alarm.delay(1500);
+    resetStuff();
     return;
   }
   switch (settingAlarmType) {
@@ -432,19 +505,16 @@ void setAlarm(bool changeAlarm) {
         Alarm.enable(alarmId[showingAlarm]);
       }
       break;
+    case 5://delete
+      deleteAlarm(alarmId[showingAlarm]);
+      showingAlarm = 0;
+      break;
     default:
       alarmId[alarms++] = Alarm.alarmOnce(setHH, setMM, 0, playAlarm); //once
       break;
   }
-
-
   lcd.clear();
   lcd.print("Alarm set!");
   Alarm.delay(1500);
-  settingAlarmType = 0;
-  settingAlarmClock = 0;
-  setHH = 0;
-  setMM = 0;
-  inMenu = false;
-  selMenu = 0;
+  resetStuff();
 }
