@@ -66,7 +66,7 @@ void setup()  {
   pinMode(OKBUTTON, INPUT);
   lcd.begin(16, 2);
   dht.begin();
-  setTime(1584835118);
+  setTime(1584976803);
   //  //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
 }
 
@@ -107,6 +107,8 @@ void resetStuff() {
   inMenu = false;
   first = 0;
   reset = 0;
+  setHH = 0;
+  setMM = 0;
 }
 void loop() {
   setButton = digitalRead(SETBUTTON);
@@ -254,7 +256,7 @@ void selectMenu(int menu, int button) {
       }
       break;
     case 2: //TODO
-      static time_t alarmVal = Alarm.read(alarmId[showingAlarm]);
+      time_t alarmVal = Alarm.read(alarmId[showingAlarm]);
       if (button == 1) {// OK
         if (settingAlarmClock == 0) {
           showingAlarm++;
@@ -288,14 +290,18 @@ void selectMenu(int menu, int button) {
         //        static int first = 0;
         Serial.println("FIRST IS");
         Serial.println(first);
-
+        Serial.println("alarm val");
+        Serial.println(alarmVal);
+        Serial.println(hour(alarmVal));
         if (!first) {
           first = 1;
           showAlarm(alarmId[showingAlarm]);
         } else if (settingAlarmClock == 0) {
           settingAlarmClock = 1;
-          setHH = alarmVal / 3600;
-          setMM = alarmVal % 3600 / 60;
+          //          setHH = alarmVal / 3600;
+          //          setMM = alarmVal % 3600 / 60;
+          setHH = hour(alarmVal);
+          setMM = minute(alarmVal);
           showSetAlarmMenu(0);
         } else if (settingAlarmType == 0) {
           settingAlarmType = 1;
@@ -343,16 +349,13 @@ void selectMenu(int menu, int button) {
 
 void showAlarm(int id) {
   time_t al = Alarm.read(id);
-  Serial.println("AL");
-  Serial.println(al);
-  //  int hh = al / 3600;
-  //  int mm = al % 3600 / 60;
-  //  showSetAlarmMenu(0);
   int hh = hour(al);
   int mm = minute(al);
   int dow = weekday(al); //(1 sunday);
   bool rep = Alarm.isRepeating(id);
   bool en = Alarm.isEnabled(id);
+  Serial.println("ENNNNN");
+  Serial.println(en);
   dtAlarmPeriod_t alarmType = Alarm.readType(id);
   lcd.setCursor(0, 0);
   displayDateTime(hh, mm);
@@ -467,6 +470,7 @@ void setAlarm(bool changeAlarm) {
     lcd.print("limit reached!");
     return;
   }
+  //TODO optimise
   if (changeAlarm && settingAlarmType != 4 && settingAlarmType != 5) {
     switch (settingAlarmType) {
       case 1:
@@ -480,6 +484,7 @@ void setAlarm(bool changeAlarm) {
         } else {
           Alarm.setPeriod(alarmId[showingAlarm], dtWeeklyAlarm);
         }
+        
     }
     Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
     lcd.clear();
@@ -498,11 +503,21 @@ void setAlarm(bool changeAlarm) {
     case 3:
       alarmId[alarms++] = Alarm.alarmRepeat(day(), setHH, setMM, 0, playAlarm); //weekly
       break;
-    case 4://disable
-      if (Alarm.isEnabled(alarmId[showingAlarm])) {
-        Alarm.disable(alarmId[showingAlarm]);
+    case 4://ONLY FOR CHANGING  ALRAM // ENABLE/DISABLE
+      if (changeAlarm) {
+        if (Alarm.isEnabled(alarmId[showingAlarm])) {
+          Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
+          Alarm.disable(alarmId[showingAlarm]);
+        } else {
+          Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
+          Alarm.enable(alarmId[showingAlarm]);
+        }
       } else {
-        Alarm.enable(alarmId[showingAlarm]);
+        if (Alarm.isEnabled(alarmId[showingAlarm])) {
+          Alarm.disable(alarmId[showingAlarm]);
+        } else {
+          Alarm.enable(alarmId[showingAlarm]);
+        }
       }
       break;
     case 5://delete
