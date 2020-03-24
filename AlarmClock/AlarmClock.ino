@@ -16,6 +16,7 @@ int showingAlarm = 0;
 int reset = 0;
 void deleteAlarm(AlarmID_t i) {
   AlarmID_t id;
+  Serial.println("NIGGHAUHGI");
   if (id == -1) {//if -1, deleting alarm that is triggered once
     id = Alarm.getTriggeredAlarmId();
     if (Alarm.isRepeating(id)) {
@@ -233,7 +234,7 @@ void selectMenu(int menu, int button) {
           }
         } else {
           settingAlarmType++;
-          if (settingAlarmType == 4) {
+          if (settingAlarmType == 5) {
             settingAlarmType = 1;
           }
         }
@@ -255,7 +256,7 @@ void selectMenu(int menu, int button) {
         }
       }
       break;
-    case 2: //TODO
+    case 2: //SHOW ALARMS
       time_t alarmVal = Alarm.read(alarmId[showingAlarm]);
       if (button == 1) {// OK
         if (settingAlarmClock == 0) {
@@ -275,7 +276,7 @@ void selectMenu(int menu, int button) {
           showSetAlarmMenu(0);
         } else {
           settingAlarmType++;
-          if (settingAlarmType == 6) {
+          if (settingAlarmType == 7) {
             settingAlarmType = 1;
           }
           showSetAlarmMenu(0);
@@ -298,8 +299,6 @@ void selectMenu(int menu, int button) {
           showAlarm(alarmId[showingAlarm]);
         } else if (settingAlarmClock == 0) {
           settingAlarmClock = 1;
-          //          setHH = alarmVal / 3600;
-          //          setMM = alarmVal % 3600 / 60;
           setHH = hour(alarmVal);
           setMM = minute(alarmVal);
           showSetAlarmMenu(0);
@@ -354,23 +353,21 @@ void showAlarm(int id) {
   int dow = weekday(al); //(1 sunday);
   bool rep = Alarm.isRepeating(id);
   bool en = Alarm.isEnabled(id);
-  Serial.println("ENNNNN");
-  Serial.println(en);
   dtAlarmPeriod_t alarmType = Alarm.readType(id);
   lcd.setCursor(0, 0);
   displayDateTime(hh, mm);
   printDOW(dow);
   lcd.setCursor(0, 1);
-  if (!rep) {
+  if (alarmType == dtTimer) {
+    lcd.print("Timer");
+  } else if (!rep) {
     lcd.print("Once");
   } else if (alarmType == dtDailyAlarm) {
     lcd.print("Every day");
-  } else if (alarmType == dtTimer) {
-    lcd.print("Timer");
   } else {
     lcd.print("Every week");
   }
-  if (!en) {
+  if (!en && alarmType != dtTimer) {
     lcd.print(" disabled!");
   }
 
@@ -448,14 +445,17 @@ void showSetAlarmMenu(int inc) {
       case 3:
         lcd.print("Set weekly");
         break;
-      case 4:
+      case 4://TIMER
+        lcd.print("Timer");
+        break;
+      case 5://CHANGE STUFF FOR 4 & 5
         if (Alarm.isEnabled(alarmId[showingAlarm])) {
           lcd.print("Disable");
         } else {
           lcd.print("Enable");
         }
         break;
-      case 5:
+      case 6:
         lcd.print("Delete");
         break;
       default:
@@ -471,7 +471,7 @@ void setAlarm(bool changeAlarm) {
     return;
   }
   //TODO optimise
-  if (changeAlarm && settingAlarmType != 4 && settingAlarmType != 5) {
+  if (changeAlarm && settingAlarmType != 5 && settingAlarmType != 6) {
     switch (settingAlarmType) {
       case 1:
         Alarm.setOneShot(alarmId[showingAlarm], true);
@@ -484,7 +484,7 @@ void setAlarm(bool changeAlarm) {
         } else {
           Alarm.setPeriod(alarmId[showingAlarm], dtWeeklyAlarm);
         }
-        
+
     }
     Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
     lcd.clear();
@@ -503,7 +503,20 @@ void setAlarm(bool changeAlarm) {
     case 3:
       alarmId[alarms++] = Alarm.alarmRepeat(day(), setHH, setMM, 0, playAlarm); //weekly
       break;
-    case 4://ONLY FOR CHANGING  ALRAM // ENABLE/DISABLE
+    case 4:
+      if (setHH == 0 && setMM == 0) {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Cannot set empty timer");
+        resetStuff();
+        Alarm.delay(2500);
+        return;
+      }
+      alarmId[alarms++] = Alarm.timerOnce(setHH, setMM, 0, playAlarm); //TImer
+      Serial.println("AAAA");
+      Serial.println(alarmId[alarms-1]);
+      break;
+    case 5://ONLY FOR CHANGING  ALRAM // ENABLE/DISABLE
       if (changeAlarm) {
         if (Alarm.isEnabled(alarmId[showingAlarm])) {
           Alarm.write(alarmId[showingAlarm], setHH * 3600 + setMM * 60);
@@ -520,7 +533,7 @@ void setAlarm(bool changeAlarm) {
         }
       }
       break;
-    case 5://delete
+    case 6://delete
       deleteAlarm(alarmId[showingAlarm]);
       showingAlarm = 0;
       break;

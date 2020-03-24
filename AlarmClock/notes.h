@@ -146,8 +146,6 @@ void playAlarm() {
 
   uint8_t inc;
   while (digitalRead(INCBUTTON) == HIGH);
-  Serial.println("PLAYING!!");
-  Serial.println(melodyNames[currentMelody]);
 
   for (int i = 0; i < 3; i++) {
     for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
