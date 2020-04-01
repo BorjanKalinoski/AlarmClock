@@ -91,20 +91,22 @@
 
 
 
-const int MELODIES = 2;
-int currentMelody = 1;
-const char melodyNames  [MELODIES][15] = {
 
+unsigned int currentMelody = 1;
+const unsigned int MELODIES = 2;
+
+const char melodyNames  [MELODIES][15] = {
   { "Keyboard Cat"
   }, {"Take on me"}
 };
+void playAlarm(bool test = false) { //test probably not needed
 
-void playAlarm() {
-  deleteAlarm(-1);
-  int tempo[] = {160, 140};
+    deleteAlarm(-1);
+
+  const unsigned int tempo[] = {160, 140};
 
 
-  int melody[][177] = { {
+  const int melody[][177] = { {
       REST, 1,
       REST, 1,
       NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_E4, 4,
@@ -138,17 +140,17 @@ void playAlarm() {
     }
   };
 
-  int notes = sizeof(melody[currentMelody]) / sizeof(melody[currentMelody][0]) / 2;
+  unsigned int notes = sizeof(melody[currentMelody]) / sizeof(melody[currentMelody][0]) / 2;
   // this calculates the duration of a whole note in ms
-  int wholenote = (60000 * 4) / tempo[currentMelody];
+  unsigned int wholenote = (60000 * 4) / tempo[currentMelody];
 
-  int divider = 0, noteDuration = 0;
+  unsigned int divider = 0, noteDuration = 0;
 
   uint8_t inc;
   while (digitalRead(INCBUTTON) == HIGH);
 
-  for (int i = 0; i < 3; i++) {
-    for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
+  for (unsigned int i = 0; i < 3; i++) {
+    for (unsigned int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
       inc = digitalRead(INCBUTTON);
       if (inc == HIGH) {
         break;
