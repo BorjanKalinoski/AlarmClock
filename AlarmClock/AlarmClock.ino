@@ -181,6 +181,8 @@ void loop() {
   } else if (setButton == HIGH && inMenu) {
     reset = 0;
     selectMenu(selMenu, 3);
+  } else if (selMenu == 0 && !inMenu && okButton == HIGH) {
+    DHTMeasure();
   } else if (selMenu == 0 && !inMenu) {
     lcd.clear();
     lcd.setCursor(4, 0);
@@ -200,20 +202,20 @@ void loop() {
 }
 
 void DHTMeasure() {
-  char temp[6];
-  char hum[6];
+  if (selMenu != 0 || inMenu)
+    return;
+  lcd.clear();
+  lcd.setCursor(3, 0);
   float t = dht.readTemperature();
   float h = dht.readHumidity();// TODO test negative temps, and invail values
-  dtostrf(t, 4, 1, temp);
-  dtostrf(h, 4, 1, hum);//TODO REDUCE
-  lcd.setCursor(9, 0);
-  lcd.print("T");
-  lcd.print(temp);
-  lcd.print("*C");
-  lcd.setCursor(9, 1);
-  lcd.print("H");
-  lcd.print(hum);
-  lcd.print("%");
+  lcd.print("T: ");
+  lcd.print(t, 2);
+  lcd.print("\337C");
+  lcd.setCursor(2, 1);
+  lcd.print(" H: ");
+  lcd.print(h, 2);
+  lcd.print(" %");
+  Alarm.delay(2500);
 }
 
 void selectMenu(int menu, int button) {
