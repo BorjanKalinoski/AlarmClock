@@ -92,7 +92,7 @@
 
 
 
-unsigned int currentMelody = 1;
+int currentMelody = 1;
 const unsigned int MELODIES = 2;
 
 const char melodyNames  [MELODIES][15] = {
@@ -101,7 +101,7 @@ const char melodyNames  [MELODIES][15] = {
 };
 void playAlarm(bool test = false) { //test probably not needed
 
-    deleteAlarm(-1);
+  deleteAlarm(dtFALSE_ALARM_ID);
 
   const unsigned int tempo[] = {160, 140};
 

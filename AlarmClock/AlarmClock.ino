@@ -18,17 +18,20 @@ unsigned int showingAlarm = 0; //currently displaying alarm
 unsigned int reset = 0; //reset display on X seconds
 
 void deleteAlarm(AlarmID_t i) {
+
   AlarmID_t deleteAlarmId = i;
-  if (deleteAlarmId == -1) {//if -1, deleting alarm that is triggered once
+  if (deleteAlarmId == dtFALSE_ALARM_ID) {//if -1, deleting alarm that is triggered once
     deleteAlarmId = Alarm.getTriggeredAlarmId();
     if (Alarm.isRepeating(deleteAlarmId) || deleteAlarmId == dtINVALID_ALARM_ID) {
       return;
     }
   } else {
+    if (Alarm.getTriggeredAlarmId() == dtINVALID_ALARM_ID)
+      return;
     deleteAlarmId = i;
     Alarm.free(deleteAlarmId);
   }
-
+  
   AlarmID_t temp[10];
   unsigned pom = 0;
   for (int i = 0; i < alarms; i++) {
@@ -64,6 +67,7 @@ void setup()  {
   Serial.begin(9600);
   while (!Serial);
   analogWrite(6, LCDCONTRAST);//for LCD Display
+  Serial.println("START");
   pinMode(BUZZPIN, OUTPUT);
   pinMode(SETBUTTON, INPUT);
   pinMode(INCBUTTON, INPUT);
@@ -71,7 +75,8 @@ void setup()  {
   lcd.begin(16, 2);
   dht.begin();
   setTime(1585305742);
-  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
+  //  lcd.setBacklight();
+  //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
 }
 
 void chooseMenu(unsigned int inc) {
@@ -182,7 +187,7 @@ void loop() {
     reset = 0;
     selectMenu(selMenu, 3);
   } else if (selMenu == 0 && !inMenu && okButton == HIGH) {
-    DHTMeasure();
+    //    DHTMeasure();
   } else if (selMenu == 0 && !inMenu) {
     lcd.clear();
     lcd.setCursor(4, 0);
@@ -191,10 +196,10 @@ void loop() {
 
   if (selMenu != 0) {//TODO??? implement with millis()
     reset++;
-    Alarm.delay(450);
+    Alarm.delay(1000);
   } else {
     reset = 0;
-    Alarm.delay(550);
+    Alarm.delay(1000);
   }
   if (reset == 20) {
     resetStuff();
@@ -222,7 +227,10 @@ void selectMenu(int menu, int button) {
   switch (menu) {
     case 3:
       //      static int currentMelody = 1;
-      unsigned static int choosingSong = currentMelody;
+      static int choosingSong = currentMelody;
+      //      Serial.println("serialllll");
+      Serial.println(choosingSong);
+      Serial.println(currentMelody);
       if (button == 1) {
         choosingSong++;
         if (choosingSong == MELODIES) {
@@ -230,11 +238,16 @@ void selectMenu(int menu, int button) {
         }
         displaySong(choosingSong);
       } else if (button == 2) {
-        unsigned int prevSong = currentMelody;
+        Serial.println('a');
+        int prevSong = currentMelody;
+
+        Serial.println('a');
         currentMelody = choosingSong;
-        Serial.println("TUKA");
-        Serial.println(currentMelody);
+
+        Serial.println('a');
         playAlarm(true);
+
+        Serial.println('a');
         currentMelody = prevSong;
         displaySong(choosingSong);
       } else if (button == 3) {
