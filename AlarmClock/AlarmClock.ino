@@ -8,9 +8,11 @@
 #define OKBUTTON 10
 #define DHTPIN 7
 #define DHTTYPE DHT22
+//#define BACKLIGHTPIN 9 // MUST BE PMW, ANALOGWRITE(BACKLIGHTPIN,0-255); OOOOR I2C
 #define BUZZPIN 13
 #define LCDCONTRAST 155
-
+//
+//int backlight = 128;
 AlarmID_t alarmId[10]; //maximum 10 alarms
 unsigned long timerMillis[10];
 unsigned int alarms = 0;//current number of alarms
@@ -31,7 +33,7 @@ void deleteAlarm(AlarmID_t i) {
     deleteAlarmId = i;
     Alarm.free(deleteAlarmId);
   }
-  
+
   AlarmID_t temp[10];
   unsigned pom = 0;
   for (int i = 0; i < alarms; i++) {
@@ -68,14 +70,14 @@ void setup()  {
   while (!Serial);
   analogWrite(6, LCDCONTRAST);//for LCD Display
   Serial.println("START");
-  pinMode(BUZZPIN, OUTPUT);
+  //  pinMode(BUZZPIN, OUTPUT);
   pinMode(SETBUTTON, INPUT);
   pinMode(INCBUTTON, INPUT);
   pinMode(OKBUTTON, INPUT);
   lcd.begin(16, 2);
   dht.begin();
+
   setTime(1585305742);
-  //  lcd.setBacklight();
   //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
 }
 
@@ -226,9 +228,7 @@ void DHTMeasure() {
 void selectMenu(int menu, int button) {
   switch (menu) {
     case 3:
-      //      static int currentMelody = 1;
       static int choosingSong = currentMelody;
-      //      Serial.println("serialllll");
       Serial.println(choosingSong);
       Serial.println(currentMelody);
       if (button == 1) {
@@ -238,16 +238,12 @@ void selectMenu(int menu, int button) {
         }
         displaySong(choosingSong);
       } else if (button == 2) {
-        Serial.println('a');
         int prevSong = currentMelody;
 
-        Serial.println('a');
         currentMelody = choosingSong;
 
-        Serial.println('a');
         playAlarm(true);
 
-        Serial.println('a');
         currentMelody = prevSong;
         displaySong(choosingSong);
       } else if (button == 3) {
@@ -255,12 +251,11 @@ void selectMenu(int menu, int button) {
           displaySong(choosingSong);
         } else {
           currentMelody = choosingSong;
-          choosingSong = 0;
-          inMenu = false;
-          selMenu = 0;
-          lcd.setCursor(0, 0);
-          lcd.print("NEW SONG SET!");
           lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Alarm song set!");
+          resetStuff();
+          Alarm.delay(2000);
         }
       }
       break;
