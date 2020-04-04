@@ -92,7 +92,7 @@
 
 
 
-unsigned int currentMelody = 1;
+int currentMelody = 1;
 const unsigned int MELODIES = 2;
 
 const char melodyNames  [MELODIES][15] = {
@@ -101,7 +101,7 @@ const char melodyNames  [MELODIES][15] = {
 };
 void playAlarm(bool test = false) { //test probably not needed
 
-    deleteAlarm(-1);
+  deleteAlarm(dtFALSE_ALARM_ID);
 
   const unsigned int tempo[] = {160, 140};
 
@@ -140,11 +140,11 @@ void playAlarm(bool test = false) { //test probably not needed
     }
   };
 
-  unsigned int notes = sizeof(melody[currentMelody]) / sizeof(melody[currentMelody][0]) / 2;
+  int notes = sizeof(melody[currentMelody]) / sizeof(melody[currentMelody][0]) / 2;
   // this calculates the duration of a whole note in ms
-  unsigned int wholenote = (60000 * 4) / tempo[currentMelody];
+  int wholenote = (60000 * 4) / tempo[currentMelody];
 
-  unsigned int divider = 0, noteDuration = 0;
+  int divider = 0, noteDuration = 0;
 
   uint8_t inc;
   while (digitalRead(INCBUTTON) == HIGH);
