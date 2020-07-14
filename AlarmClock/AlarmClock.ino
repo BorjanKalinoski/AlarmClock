@@ -77,7 +77,7 @@ void setup()  {
   lcd.begin(16, 2);
   dht.begin();
 
-  setTime(1585305742);
+  setTime(1586027350);
   //  Alarm.timerRepeat(500, DHTMeasure);//idealno povekje sekundi
 }
 
